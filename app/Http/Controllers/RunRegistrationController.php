@@ -63,9 +63,26 @@ class RunRegistrationController extends Controller
             'tshirt_size' => 'required|in:S,M,L,XL,XXL,XXXL',
         ]);
 
-        // Generate unique registration ID
+        // Generate unique registration ID based on run category
+        $categoryPrefix = '';
+        switch ($request->run_category) {
+            case '2.5KM':
+                $categoryPrefix = '2.5-';
+                break;
+            case '5KM':
+                $categoryPrefix = '5-';
+                break;
+            case '10KM':
+                $categoryPrefix = '10-';
+                break;
+            default:
+                $categoryPrefix = 'TR-';
+        }
+        
         do {
-            $registrationId = 'TR-' . strtoupper(Str::random(8));
+            // Generate 5 random digits
+            $randomNumbers = str_pad(rand(0, 99999), 5, '0', STR_PAD_LEFT);
+            $registrationId = $categoryPrefix . $randomNumbers;
         } while (RunRegistration::where('registration_id', $registrationId)->exists());
 
         $registration = RunRegistration::create([
@@ -79,6 +96,7 @@ class RunRegistrationController extends Controller
             'contact_number' => $request->contact_number,
             'tshirt_size' => $request->tshirt_size,
             'registration_id' => $registrationId,
+            // Bib number will be assigned later by admin
         ]);
 
         return redirect()->back()->with([
@@ -91,6 +109,65 @@ class RunRegistrationController extends Controller
     {
         $registrations = RunRegistration::latest()->get();
         return view('run.list', compact('registrations'));
+    }
+
+    public function showLogin()
+    {
+        return view('admin.login');
+    }
+
+    public function login(Request $request)
+    {
+        $password = $request->input('password');
+        $adminPassword = env('ADMIN_PASSWORD', 'admin123'); // Default password, change in .env
+
+        if ($password === $adminPassword) {
+            session(['admin_logged_in' => true]);
+            return redirect()->route('registrations.list')->with('success', 'Login successful!');
+        }
+
+        return redirect()->back()->with('error', 'Invalid password');
+    }
+
+    public function logout()
+    {
+        session()->forget('admin_logged_in');
+        return redirect()->route('admin.login')->with('success', 'Logged out successfully');
+    }
+
+    public function edit($id)
+    {
+        $registration = RunRegistration::findOrFail($id);
+        return view('run.edit', compact('registration'));
+    }
+
+    public function update(Request $request, $id)
+    {
+        $registration = RunRegistration::findOrFail($id);
+        
+        $request->validate([
+            'name' => 'required',
+            'designation' => 'required',
+            'company' => 'required',
+            'entity' => 'required',
+            'dob' => 'required|date',
+            'run_category' => 'required|in:2.5KM,5KM,10KM',
+            'contact_number' => 'required|digits_between:10,12',
+            'tshirt_size' => 'required|in:S,M,L,XL,XXL,XXXL',
+        ]);
+
+        $registration->update([
+            'name' => $request->name,
+            'designation' => $request->designation,
+            'company' => $request->company,
+            'entity' => $request->entity,
+            'dob' => $request->dob,
+            'run_category' => $request->run_category,
+            'contact_number' => $request->contact_number,
+            'tshirt_size' => $request->tshirt_size,
+        ]);
+
+        return redirect()->route('registrations.list')->with('success', 'Registration updated successfully!');
     }
 
     public function export()
@@ -113,6 +190,7 @@ class RunRegistrationController extends Controller
             // Header row
             fputcsv($file, [
                 'Registration ID',
+                'Bib Number',
                 'Employee ID',
                 'Name',
                 'Designation',
@@ -129,6 +207,7 @@ class RunRegistrationController extends Controller
             foreach ($registrations as $r) {
                 fputcsv($file, [
                     $r->registration_id ?? 'N/A',
+                    $r->bib_number ?? '-',
                     $r->employee_id,
                     $r->name,
                     $r->designation,

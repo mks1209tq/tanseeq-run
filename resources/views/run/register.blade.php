@@ -79,16 +79,6 @@
                         </div>
                     @else
 
-                    <div class="notes-section">
-                        <strong style="font-size: 12px; color: #333;">Important Notes:</strong>
-                        <ol style="margin-top: 10px;">
-                            <li>Each employee is allowed to participate in only one (1) run category.</li>
-                            <li>Employees requiring transportation facilities are requested to coordinate with Transmech – Mr. Shafi (Transport Coordinator) at 055 404 1686.</li>
-                            <li>The deadline for submission of the registration form is 06 January.</li>
-                            <li>No registrations will be accepted at the event venue / ground.</li>
-                        </ol>
-                    </div>
-
                     @if($errors->any())
                         <div class="alert alert-danger">
                             <ul class="mb-0">
@@ -145,7 +135,7 @@
                         </div>
 
                         <div class="mb-3">
-                            <label for="run_category" class="form-label">UN Category <span class="text-danger">*</span></label>
+                            <label for="run_category" class="form-label">RUN Category <span class="text-danger">*</span></label>
                             <select class="form-control form-select" id="run_category" name="run_category" required>
                                 <option value="">Select Category</option>
                                 <option value="2.5KM">2.5KM</option>

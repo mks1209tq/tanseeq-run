@@ -18,5 +18,6 @@ class RunRegistration extends Model
         'contact_number',
         'tshirt_size',
         'registration_id',
+        'bib_number',
     ];
 }
